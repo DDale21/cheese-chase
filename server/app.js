@@ -14,7 +14,7 @@ app.use("/api/v1/orders", orderRoutes);
 
 try {
   await connectToDB(process.env.MONGO_URI);
-  console.log('Sucessfully connected to Database')
+  console.log("Successfully connected to Database");
 
   const port = process.env.PORT || 3000;
   app.listen(port, () => {
