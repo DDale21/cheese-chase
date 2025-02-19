@@ -8,7 +8,7 @@ export const getAllOrders = (req, res) => {
 }
 
 export const getOrderById = (req, res) => {
-  const { id } = req.param;
+  const { id } = req.params;
   res.status(200).json({
     success: true,
     message: `Order with ID: ${id}`,
@@ -23,15 +23,17 @@ export const createOrder = (req, res) => {
 }
 
 export const updateOrderById = (req, res) => {
+  const { id } = req.params;
   res.status(200).json({
     success: true,
-    message: 'Successfully updated an order',
+    message: `Successfully updated an order with an ID of ${id}`,
   });
 }
 
 export const deleteOrderById = (req, res) => {
+  const { id } = req.params;
   res.status(200).json({
     success: true,
-    message: 'Successfully created an order',
+    message: `Successfully deleted an order with an ID of ${id}`,
   });
 }
