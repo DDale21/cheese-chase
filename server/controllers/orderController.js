@@ -26,7 +26,7 @@ export const getAllOrders = async (req, res) => {
 
 export const getOrderById = async(req, res) => {
   const { id } = req.params;
-  if (mongoose.Types.ObjectId.isValid(id)) {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
     return res.status(400).json({
       success: false,
       message: "Invalid ID format",
@@ -88,10 +88,31 @@ export const updateOrderById = (req, res) => {
   });
 }
 
-export const deleteOrderById = (req, res) => {
+export const deleteOrderById = async (req, res) => {
   const { id } = req.params;
-  res.status(200).json({
-    success: true,
-    message: `Successfully deleted an order with an ID of ${id}`,
-  });
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid ID format",
+    });
+  }
+  try {
+    const deletedOrder = await Order.findByIdAndDelete(id);
+    if (!deletedOrder) {
+      return res.status(404).json({
+        success: false,
+        message: "Cannot delete Order, order with specified ID does not exists",
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: `Successfully deleted order with ID: ${deletedOrder._id}`,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+      error: error,
+    });
+  }
 }
