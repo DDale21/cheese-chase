@@ -10,6 +10,7 @@ dotenv.config();
 const app = express();
 
 app.use(cors());
+app.use(express.json());
 app.use("/api/v1/orders", orderRoutes);
 
 try {
