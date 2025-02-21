@@ -5,6 +5,7 @@ import cors from "cors";
 import connectToDB from "./db/connect.js";
 
 import orderRoutes from "./routes/orderRoutes.js"
+import pizzaRoutes from "./routes/pizzaRoutes.js"
 
 dotenv.config();
 const app = express();
@@ -12,6 +13,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use("/api/v1/orders", orderRoutes);
+app.use("/api/v1/pizzas", pizzaRoutes);
 
 try {
   await connectToDB(process.env.MONGO_URI);
