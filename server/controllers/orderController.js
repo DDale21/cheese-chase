@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Order from "../models/orderModel.js";
+import Pizza from "../models/pizzaModel.js";
 
 export const getAllOrders = async (req, res) => {
   try {
@@ -60,17 +61,25 @@ export const createOrder = async (req, res) => {
     email,
     phone,
     pizzas,
-    totalPrice,
-    completed,
   } = req.body;
+
+  // TODO: Calculate price
+  let totalPrice = 0;
+  const orderItems = await Promise.all(
+    pizzas.map(async (p) => {
+      const matchingPizza = await Pizza.findById(p.pizza);
+      const price = matchingPizza.prices[p.size];
+      totalPrice += (price * p.quantity);
+      return { pizza: matchingPizza._id, size: p.size, quantity: p.quantity, price: price }
+    })
+  );
 
   const newOrder = await Order.create({
     customerName: customerName,
     email: email,
     phone: phone,
-    pizzas: pizzas,
+    pizzas: orderItems,
     totalPrice: totalPrice,
-    completed: completed,
   });
 
   res.status(201).json({
@@ -80,6 +89,8 @@ export const createOrder = async (req, res) => {
   });
 }
 
+
+// deciding if updating of order is needed
 export const updateOrderById = (req, res) => {
   const { id } = req.params;
   res.status(200).json({

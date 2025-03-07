@@ -44,8 +44,9 @@ export const getPizzaById = async (req, res) => {
 }
 
 export const createPizza = async (req, res) => {
+  const { name, prices, description } = req.body
   try {
-    const newPizza = await Pizza.create(req.body);
+    const newPizza = await Pizza.create({ name, prices, description });
     return res.status(200).json({
       success: true,
       pizza: newPizza,
