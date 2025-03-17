@@ -11,6 +11,10 @@ const orderSchema = new mongoose.Schema({
         ref: "Pizza",
         required: true,
       },
+      name: {
+        type: String,
+        required: true,
+      },
       size: {
         type: String,
         enum: ["small", "medium", "large"],
@@ -18,11 +22,28 @@ const orderSchema = new mongoose.Schema({
       },
       quantity: { type: Number, required: true},
       price: { type: Number, required: true },
+      _id: false, // Prevent mongoose from adding _id
     }
   ],
   totalPrice: { type: Number, required: true},
-  completed: {type: Boolean, required: true, default: false},
-});
+  status: {
+    type: String,
+    enum: [
+      "preparing",
+      "cooking",
+      "ready for pickup",
+      "getting delivered",
+      "delivered",
+      "completed"
+    ],
+    required: true,
+    default: "preparing",
+  },
+}, {timestamps: true});
+
+orderSchema.methods.getId = function () {
+  return this._id;
+}
 
 const Order = mongoose.model("Order", orderSchema);
 

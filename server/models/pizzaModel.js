@@ -10,5 +10,15 @@ const pizzaSchema = new mongoose.Schema({
   description: {type: String}
 });
 
+pizzaSchema.methods.getId = function () {
+  return this._id;
+}
+pizzaSchema.methods.getName = function () {
+  return this.name;
+}
+pizzaSchema.methods.getPriceBySize = function (size) {
+  return this.prices[size];
+}
+
 const Pizza = mongoose.model("Pizza", pizzaSchema);
 export default Pizza;

@@ -63,14 +63,19 @@ export const createOrder = async (req, res) => {
     pizzas,
   } = req.body;
 
-  // TODO: Calculate price
   let totalPrice = 0;
   const orderItems = await Promise.all(
     pizzas.map(async (p) => {
       const matchingPizza = await Pizza.findById(p.pizza);
-      const price = matchingPizza.prices[p.size];
+      const price = matchingPizza.getPriceBySize(p.size);
       totalPrice += (price * p.quantity);
-      return { pizza: matchingPizza._id, size: p.size, quantity: p.quantity, price: price }
+      return { 
+        pizza: matchingPizza.getId(),
+        name: matchingPizza.getName(),
+        size: p.size, 
+        quantity: p.quantity, 
+        price: price 
+      }
     })
   );
 
@@ -89,13 +94,14 @@ export const createOrder = async (req, res) => {
   });
 }
 
-
-// deciding if updating of order is needed
-export const updateOrderById = (req, res) => {
+export const updateOrderStatusById = async (req, res) => {
   const { id } = req.params;
+  const { status } = req.body;
+  const updatedOrder = await Order.findByIdAndUpdate(id, { status }, { new: true, runValidators: true })
   res.status(200).json({
     success: true,
-    message: `Successfully updated an order with an ID of ${id}`,
+    message: `Successfully updated an order with an ID of ${updatedOrder.getId()}`,
+    updatedOrder: updatedOrder,
   });
 }
 
