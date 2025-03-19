@@ -1,58 +1,47 @@
 import mongoose from "mongoose";
 import Order from "../models/orderModel.js";
 import Pizza from "../models/pizzaModel.js";
+import NotFoundError from "../errors/NotFoundError.js";
+import BadRequestError from "../errors/BadRequestError.js";
 
 export const getAllOrders = async (req, res) => {
-  try {
-    const orders = await Order.find({});
-    if (!orders || orders.length === 0) {
-      return res.status(404).json({
-        success: true,
-        message: "No orders found",
-        orders: [],
-      });
-    }
+  const orders = await Order.find({});
+
+  if (!orders) {
+    throw new NotFoundError("No order")
+  }
+
+  if (orders && orders.length === 0) {
     return res.status(200).json({
       success: true,
-      order: orders,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Something went wrong",
-      error: error,
+      message: "Empty orders",
+      orders: orders,
     });
   }
+
+  return res.status(200).json({
+    success: true,
+    hits: orders.length,
+    order: orders,
+  });
 }
 
 export const getOrderById = async(req, res) => {
   const { id } = req.params;
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid ID format",
-    });
+    throw new BadRequestError("Invalid ID format")
   }
-  try {
-    const order = await Order.findById(id);
-    if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: "Order with specified ID not found"
-      });
-    }
-    res.status(200).json({
-      success: true,
-      order: order,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Something went wrong",
-      error: error,
-    });
+
+  const order = await Order.findById(id);
+
+  if (!order) {
+    throw new NotFoundError("Order with specified ID not found");
   }
-  
+
+  return res.status(200).json({
+    success: true,
+    order: order,
+  });
 }
 
 export const createOrder = async (req, res) => {
@@ -66,7 +55,16 @@ export const createOrder = async (req, res) => {
   let totalPrice = 0;
   const orderItems = await Promise.all(
     pizzas.map(async (p) => {
-      const matchingPizza = await Pizza.findById(p.pizza);
+      if (!mongoose.Types.ObjectId.isValid(p.id)) {
+        throw new BadRequestError("Invalid Pizza ID format");
+      }
+
+      const matchingPizza = await Pizza.findById(p.id);
+
+      if (!matchingPizza) {
+        throw new NotFoundError(`No pizza with ID: ${p.id}`);
+      }
+
       const price = matchingPizza.getPriceBySize(p.size);
       totalPrice += (price * p.quantity);
       return { 
@@ -87,9 +85,8 @@ export const createOrder = async (req, res) => {
     totalPrice: totalPrice,
   });
 
-  res.status(201).json({
+  return res.status(201).json({
     success: true,
-    message: 'Successfully created an order',
     order: newOrder,
   });
 }
@@ -97,10 +94,26 @@ export const createOrder = async (req, res) => {
 export const updateOrderStatusById = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
-  const updatedOrder = await Order.findByIdAndUpdate(id, { status }, { new: true, runValidators: true })
-  res.status(200).json({
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new BadRequestError("Invalid ID format");
+  }
+
+  const updatedOrder = await Order.findByIdAndUpdate(
+    id, 
+    { status }, 
+    {
+      new: true,
+      runValidators: true
+    }
+  );
+  
+  if (!updatedOrder) {
+    throw new NotFoundError("Failed to update order, Order not found");
+  }
+
+  return res.status(200).json({
     success: true,
-    message: `Successfully updated an order with an ID of ${updatedOrder.getId()}`,
     updatedOrder: updatedOrder,
   });
 }
@@ -108,28 +121,17 @@ export const updateOrderStatusById = async (req, res) => {
 export const deleteOrderById = async (req, res) => {
   const { id } = req.params;
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid ID format",
-    });
+    throw new BadRequestError("Invalid ID format")
   }
-  try {
-    const deletedOrder = await Order.findByIdAndDelete(id);
-    if (!deletedOrder) {
-      return res.status(404).json({
-        success: false,
-        message: "Cannot delete Order, order with specified ID does not exists",
-      });
-    }
-    return res.status(200).json({
-      success: true,
-      message: `Successfully deleted order with ID: ${deletedOrder._id}`,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Something went wrong",
-      error: error,
-    });
+
+  const deletedOrder = await Order.findByIdAndDelete(id);
+
+  if (!deletedOrder) {
+    throw new NotFoundError("Failed to delete order, Order not found")
   }
+
+  return res.status(200).json({
+    success: true,
+    message: `Successfully deleted order with ID: ${deletedOrder._id}`,
+  });
 }
